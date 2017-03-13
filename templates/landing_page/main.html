@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BNW - Arrange Meetings Demo</title>
+</head>
+<body>
+    <div class="organizer">
+        <h1>Organizer</h1>
+        {% include "landing_page/user_select.html" with userselectid="select-organizer" only %}
+        {% include "landing_page/price_select.html" %}
+
+    </div>
+</body>
+</html>
