@@ -8,5 +8,5 @@ class IUserPreferencesDao(object):
     def get_user_preferences(self, user_id):
         """
         :type user_id: int
-        :rtype: dinner.dao.beans.UserPreferences
+        :rtype: users.dao.beans.UserPreferences
         """

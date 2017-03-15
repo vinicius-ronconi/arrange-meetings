@@ -4,18 +4,6 @@ from users.dao.interfaces import IUserPreferencesDao
 
 
 class DbUserPreferencesDao(IUserPreferencesDao):
-    LATITUDE = -20
-    LONGITUDE = -19
-
-    RESTAURANT_TYPES = [
-        'italian',
-        'brazilian',
-        'japanese',
-        'BBQ',
-        'mexican',
-        'vegan',
-    ]
-
     def get_user_preferences(self, user_id):
         preferences = models.UserPreferences.objects.get(user_id=user_id)
         return beans.UserPreferences(

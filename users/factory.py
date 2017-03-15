@@ -6,6 +6,9 @@ from users.dao.fake_dao import FakeUserPreferencesDao
 class UserDaoFactory(object):
     @classmethod
     def make_dao(cls):
+        """
+        :rtype: users.dao.interfaces.IUserPreferencesDao
+        """
         if settings.USE_FAKE_DATA:
             return cls._make_fake_dao()
         else:
