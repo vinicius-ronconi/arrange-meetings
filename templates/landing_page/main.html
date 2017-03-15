@@ -3,13 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <title>BNW - Arrange Meetings Demo</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
 </head>
 <body>
-    <div class="organizer">
-        <h1>Organizer</h1>
-        {% include "landing_page/user_select.html" with userselectid="select-organizer" only %}
-        {% include "landing_page/price_select.html" %}
+    <form id="meetings-form">
+        <div class="organizer-div">
+            <h1>Organizer</h1>
+            {% include "landing_page/user_select.html" with userselectid="organizer" only %}
+            {% include "landing_page/price_select.html" %}
+            <div class="location">
+                <input id="organizer-location" type="text" placeholder="Current organizer location - fmt: lat,long"/>
+                <input id="radius" type="text" placeholder="Maximum distance"/>
+            </div>
+            <div class="restaurant-types-selection">
+                <input id="restaurant-types" type="text" placeholder="Restaurant types separated by commas"/>
+            </div>
+            <div class="open-now-selection">
+                <label><input type="checkbox" id="open-now">Show only restaurants open now.</label>
+            </div>
+        </div>
+        <div class="invitee-div">
+            <h1>Invitee</h1>
+            {% include "landing_page/user_select.html" with userselectid="invitee" only %}
+        </div>
+        <br>
+        <input type="button" id="searchBtn" value="Search for common places" />
+    </form>
+    <div id="ws-errors"></div>
+    <h1>Common places</h1>
+    <div id="common-places"></div>
+    <h1>Invitee places</h1>
+    <div id="invitee-places"></div>
+    <script>
+        $(document).ready(function () {
+            $("#searchBtn").click(function () {
+                $("#common-places").empty();
+                $("#invitee-places").empty();
+                $("#ws-errors").empty();
+                var form_elements = $("#meetings-form")[0].elements;
+                for (var i = 0; i < form_elements.length; i++) {
+                    if (form_elements[i].value === "" && form_elements[i].hasAttribute("required")) {
+                        alert("Missing required parameters! Make sure you selected the organizer and invitee");
+                        return false;
+                    }
+                }
+                get_places();
+            })
+        });
+        function get_places() {
+            $.ajax({
+                type: "GET",
+                url: make_api_url(),
+                dataType: "json",
+                contentType: "application/json; charset=utf-8",
+                success: function (data) {
+                    show_data(data);
+                },
+                error: function (error, err) {
+                    $("<p>Error Processing the request...</p>").appendTo($("#ws-errors"));
+                }
+            });
+        }
+        function make_api_url() {
+            var organizer_id = $("select#organizer option:checked").val(),
+                invitee_id = $("select#invitee option:checked").val(),
+                organizer_location = $("input#organizer-location").val(),
+                radius = $("input#radius").val(),
+                min_price = $("select#min-price option:checked").val(),
+                max_price = $("select#max-price option:checked").val(),
+                restaurant_types = $("input#restaurant-types").val(),
+                open_now = $("input#open-now").is(":checked");
 
-    </div>
+            return "/meetings/arrange/?organizer_id=" + organizer_id + "&invitee_id=" + invitee_id +
+                (organizer_location ? "&organizer_location=" + organizer_location : "") +
+                (min_price ? "&min_price=" + min_price : "") +
+                (max_price ? "&max_price=" + max_price : "") +
+                (restaurant_types ? "&restaurant_types=" + restaurant_types : "") +
+                (open_now? "&open_now=" + open_now : "");
+        }
+        function show_data(data) {
+            show_places(data["common_places"], $("#common-places"));
+            show_places(data["invitee_places"], $("#invitee-places"));
+        }
+        function show_places(places, div) {
+            if (places && places.length > 0) {
+                for (var index = 0; index < places.length; index ++) {
+                    $("<div class='place'>" +
+                        "<span class='place-name'>" + places[index].name + "</span> - " +
+                        "<span class='place-name'>" + places[index].vicinity + "</span>" +
+                        "</div>"
+                    ).appendTo(div);
+                }
+            } else {
+                $("<p>No places found</p>").appendTo(div);
+            }
+        }
+    </script>
 </body>
 </html>

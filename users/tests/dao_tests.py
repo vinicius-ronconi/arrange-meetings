@@ -16,6 +16,8 @@ class DbDaoTestCase(TestCase):
         UserPreferences(
             user_id=self.USER_ID,
             home_location=(-20.2877528, -40.2932812),
+            min_price=0,
+            max_price=4,
             radius_in_meters=5000,
             restaurant_types=['italian', 'brazilian', 'BBQ']
         ).save()

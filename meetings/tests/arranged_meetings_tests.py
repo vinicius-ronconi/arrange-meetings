@@ -5,6 +5,7 @@ from django.test import TestCase
 
 from places.interfaces import IPlacesApi
 from places.api import FakePlacesApi
+from places.exceptions import NoDataFoundException
 from users.dao.interfaces import IUserPreferencesDao
 
 
@@ -64,6 +65,11 @@ class NoPlaceFakeApi(IPlacesApi):
         return Places(places_list=[], next_page_token='')
 
 
+class NoDataFoundFakeApi(IPlacesApi):
+    def get_places(self, places_query):
+        raise NoDataFoundException()
+
+
 class ArrangedMeetingTestCase(TestCase):
     def setUp(self):
         self._mock_user_preferences_dao()
@@ -85,6 +91,12 @@ class ArrangedMeetingTestCase(TestCase):
         content = self._assert_it_returns_arranged_meetings(response)
         self._assert_no_matches(content, has_place=False)
 
+    def test_it_invitee_raises_no_data_found_exception(self):
+        self.mocked_places_api.return_value = NoDataFoundFakeApi()
+        response = self.client.get(reverse('arrange_meetings'), data={'organizer_id': 1, 'invitee_id': 5})
+        content = self._assert_it_returns_arranged_meetings(response)
+        self._assert_no_matches(content, has_place=False)
+
     def test_it_returns_only_invitees_places_when_no_restaurant_type_matches(self):
         self.mocked_places_api.return_value = FakePlacesApi()
         response = self.client.get(reverse('arrange_meetings'), data={'organizer_id': 1, 'invitee_id': 3})
@@ -98,6 +110,7 @@ class ArrangedMeetingTestCase(TestCase):
         self._assert_no_matches(content, has_place=True)
 
     def test_it_uses_pages_token_when_it_is_present_on_the_request(self):
+        # TODO
         pass
 
     def test_it_returns_common_places(self):

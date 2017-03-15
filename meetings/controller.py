@@ -2,6 +2,7 @@ from operator import itemgetter
 from meetings import beans, exceptions
 from users.dao.beans import UserPreferences
 from places.beans import PlacesQuery
+from places import exceptions as places_exceptions
 
 
 class ArrangeMeetingController(object):
@@ -72,9 +73,9 @@ class ArrangeMeetingController(object):
         return UserPreferences(
             user_id=organizer_id,
             home_location=self._get_location_from_request(request)[0] or preset_preferences.home_location,
-            radius_in_meters=request.GET.get('radius') or preset_preferences.radius_in_meters,
-            min_price=request.GET.get('min_price') or preset_preferences.min_price,
-            max_price=request.GET.get('max_price') or preset_preferences.max_price,
+            radius_in_meters=int(request.GET.get('radius') or preset_preferences.radius_in_meters),
+            min_price=int(request.GET.get('min_price') or preset_preferences.min_price),
+            max_price=int(request.GET.get('max_price') or preset_preferences.max_price),
             restaurant_types=restaurant_types,
         )
 
@@ -166,17 +167,22 @@ class ArrangeMeetingController(object):
         all_places = []
         next_pages_tokens = {}
         for restaurant_type in restaurant_types:
-            places = self.api.get_places(PlacesQuery(
-                next_page_token=next_pages.get(restaurant_type),
-                location=user_preferences.home_location,
-                radius=user_preferences.radius_in_meters,
-                min_price=min_price,
-                max_price=max_price,
-                open_now=open_now,
-                restaurant_type=restaurant_type,
-            ))
-            all_places += places.places_list
-            next_pages_tokens[restaurant_type] = places.next_page_token
+            try:
+                places = self.api.get_places(PlacesQuery(
+                    next_page_token=next_pages.get(restaurant_type),
+                    location=user_preferences.home_location,
+                    radius=user_preferences.radius_in_meters,
+                    min_price=min_price,
+                    max_price=max_price,
+                    open_now=open_now,
+                    restaurant_type=restaurant_type,
+                ))
+            except places_exceptions.NoDataFoundException:
+                continue
+            else:
+                all_places += places.places_list
+                next_pages_tokens[restaurant_type] = places.next_page_token
+
         return beans.PlacesOptions(
             places=all_places,
             next_pages=next_pages_tokens,
